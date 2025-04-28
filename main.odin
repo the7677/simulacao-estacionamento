@@ -11,13 +11,13 @@ SCREEN_WIDTH, SCREEN_HEIGHT :: 512, 512
 SCREEN_CENTER :: rl.Vector2{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}
 
 BACKGROUND_COLOR :: rl.Color{236, 230, 223, 255}
-FOREGROUND_COLOR :: rl.Color{42, 28, 49, 255}
+FOREGROUND_COLOR :: rl.Color{42,  28,  49,  255}
 
-BLUE_COLOR   :: rl.Color{77, 82, 138, 255}
-GREEN_COLOR  :: rl.Color{73, 101, 65, 255}
-PURPLE_COLOR :: rl.Color{110, 69, 104, 255}
-RED_COLOR    :: rl.Color{159, 76, 61, 255}
-YELLOW_COLOR :: rl.Color{235, 172, 77, 255}
+BLUE_COLOR   :: rl.Color{77,  82,  138, 255}
+GREEN_COLOR  :: rl.Color{73,  101, 65,  255}
+PURPLE_COLOR :: rl.Color{110, 69,  104, 255}
+RED_COLOR    :: rl.Color{159, 76,  61,  255}
+YELLOW_COLOR :: rl.Color{235, 172, 77,  255}
 
 COLORS       := []rl.Color{
     BLUE_COLOR, GREEN_COLOR, PURPLE_COLOR, RED_COLOR, YELLOW_COLOR
@@ -41,10 +41,9 @@ cars: [dynamic]Car
 ramp: ^Car
 gate: ^Car
 
-newCar :: proc(number: u8, color: Maybe(rl.Color) = nil) -> Car {
-    if color == nil {}
-    return Car{number = 0, sprite = {
-            tex      = rl.LoadTexture("carro2.png"),
+newCar :: proc(number: u8, texture: rl.Texture, color: Maybe(rl.Color) = nil) -> Car {
+    return {number = number, sprite = {
+            tex      = texture,
             src      = {0, 0, 48, 128},
             dst      = {256, 128, 48, 128},
             origin   = {24, 0},
@@ -59,8 +58,11 @@ main :: proc() {
     rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Simulação do Estacionamento")
     rl.SetTargetFPS(120)
 
+    car_light := rl.LoadTexture("car_light.png")
+    car_dark  := rl.LoadTexture("car_dark.png")
+
     parking := Sprite{
-        tex      = rl.LoadTexture("estacionamento.png"),
+        tex      = rl.LoadTexture("parking.png"),
         src      = {0, 0, 256, 256},
         dst      = {SCREEN_CENTER.x, SCREEN_CENTER.y - 128, 256, 256},
         origin   = {128, 128},
@@ -68,23 +70,9 @@ main :: proc() {
         color    = FOREGROUND_COLOR
     }
 
-    append(&cars, Car{0, {
-        tex      = rl.LoadTexture("carro2.png"),
-        src      = {0, 0, 48, 128},
-        dst      = {256, 128, 48, 128},
-        origin   = {24, 0},
-        rotation = {},
-        color    = BLUE_COLOR
-    }}, Car{1, {
-        tex      = rl.LoadTexture("carro2.png"),
-        src      = {0, 0, 48, 128},
-        dst      = {256, 128, 48, 128},
-        origin   = {24, 0},
-        rotation = {},
-        color    = YELLOW_COLOR
-    }})
+    append(&cars, newCar(0, car_dark), newCar(1, car_light), newCar(2, car_light), newCar(3, car_light))
 
-    buttons := rl.LoadTexture("botoes.png")
+    buttons := rl.LoadTexture("buttons.png")
 
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()
@@ -107,7 +95,6 @@ main :: proc() {
             rl.DrawText("  FDC ->", 60, 340, 20, FOREGROUND_COLOR)
             rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR)
 
-            fmt.println(rl.GetMousePosition())
         rl.EndDrawing()
     }
     
