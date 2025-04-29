@@ -6,20 +6,20 @@ import rl "vendor:raylib"
 
 
 Button :: struct {
-    action: proc(^Button),
+    update: proc(^Button),
+    press: proc(^Button),
     active: bool,
     using sprite: Sprite,
 }
 
-newButton :: proc(button: i32, pos: rl.Vector2, action: proc(^Button) = nil) -> Button {
-    buttons := rl.LoadTexture("assets/images/buttons.png")
-    
+newButton :: proc(button: i32, pos: rl.Vector2, update: proc(^Button) = nil, press: proc(^Button) = nil) -> Button {
     return {
-        action = action,
+        update = update,
+        press = press,
         active = true,
         sprite = {
-            tex   = buttons,
-            src   = {f32(button % (buttons.width / 32)) * 32, f32(button / (buttons.width / 32)) * 32, 32, 32},
+            tex   = buttons_tex,
+            src   = {f32(button % (buttons_tex.width / 32)) * 32, f32(button / (buttons_tex.width / 32)) * 32, 32, 32},
             dst   = {pos.x, pos.y, 32, 32},
             color = FOREGROUND_COLOR
         },
@@ -43,29 +43,48 @@ mouseInArea :: proc(button: Button) -> bool {
 }
 
 btnChangeTheme :: proc(^Button) {
-    DARKMODE = !DARKMODE
-
     temp := FOREGROUND_COLOR^
     FOREGROUND_COLOR^ = BACKGROUND_COLOR^
     BACKGROUND_COLOR^ = temp
 
-    car_tex = &car_dark if DARKMODE else &car_light
+    car_tex = &car_dark if car_tex == &car_light else &car_light
 }
 
-btnAdd :: proc(button: ^Button) {
-    if len(cars) < 6 && ramp == nil {
-        ramp = new_clone(newCar())
-    }
-
+btnAddUpdate :: proc(button: ^Button) {
     if len(cars) > 6 { panic("MAIS DE 6 CARROS") }
+    button.active = ramp == nil
+}
+
+btnAddPress :: proc(button: ^Button) {
+    ramp = new_clone(newCar())
+}
+
+
+btnUpUpdate :: proc(button: ^Button) {
+    button.active = ramp != nil && gate == nil
+}
+
+btnUpPress :: proc(button: ^Button) {
+    if ramp != nil {
+        ramp.dst = GATE_DST
     
-    button.active = len(cars) < 6 && ramp == nil
+        gate = ramp
+        ramp = nil
+    }
 }
 
-btnUp :: proc(button: ^Button) {
-
+btnDownUpdate :: proc(button: ^Button) {
+    button.active = ramp != nil || gate != nil
 }
 
-btnDown :: proc(button: ^Button) {
+btnDownPress :: proc(button: ^Button) {
+    if ramp != nil {
+        free(ramp)
+        ramp = nil
+    } else if gate != nil {
+        gate.dst = RAMP_DST
 
+        ramp = gate
+        gate = nil
+    }
 }

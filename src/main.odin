@@ -10,8 +10,6 @@ import rl "vendor:raylib"
 SCREEN_WIDTH, SCREEN_HEIGHT :: 512, 512
 SCREEN_CENTER :: rl.Vector2{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}
 
-DARKMODE := false
-
 BACKGROUND_COLOR := new_clone(rl.Color{236, 230, 223, 255})
 FOREGROUND_COLOR := new_clone(rl.Color{42,  28,  49,  255})
 
@@ -25,6 +23,12 @@ YELLOW_COLOR := new_clone(rl.Color{235, 172, 77,  255})
 COLORS       := []^rl.Color{
     BLUE_COLOR, CYAN_COLOR, GREEN_COLOR, PURPLE_COLOR, RED_COLOR, YELLOW_COLOR
 }
+
+RAMP_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y + 128, 48, 128}
+GATE_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y, 48, 128}
+PARKING_DST :: rl.Rectangle{SCREEN_CENTER.x, 128, 48, 128}
+
+PARKING_SPEED :: 100
 
 Sprite :: struct {
     tex:      rl.Texture2D,
@@ -40,20 +44,19 @@ Car :: struct {
     using sprite: Sprite
 }
 
-btns: [dynamic]Button
+buttons: [dynamic]Button
 cars: [dynamic]Car
 ramp: ^Car
 gate: ^Car
 gateState: enum { FIRST, SECOND }
 inEvent: bool
 
-RAMP_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y + 128, 48, 128}
-GATE_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y, 48, 128}
-PARKING_DST :: rl.Rectangle{SCREEN_CENTER.x, 128, 48, 128}
-
 car_light,
-car_dark:  rl.Texture
-car_tex:  ^rl.Texture
+car_dark,
+buttons_tex:  rl.Texture
+car_tex:     ^rl.Texture
+
+parking: Sprite
 
 newCar :: proc(color: Maybe(^rl.Color) = nil) -> Car {
     return {number = -1, sprite = {
@@ -65,6 +68,10 @@ newCar :: proc(color: Maybe(^rl.Color) = nil) -> Car {
     }
 }
 
+getCurrentLot :: proc() -> i32 {
+    return (i32(parking.rotation) %% 360) / 60
+}
+
 main :: proc() {
     rl.SetTraceLogLevel(.NONE)
     rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Simulação do Estacionamento")
@@ -74,10 +81,12 @@ main :: proc() {
 
     car_light = rl.LoadTexture("assets/images/car_light.png")
     car_dark  = rl.LoadTexture("assets/images/car_dark.png")
-    car_tex   = new_clone(car_light)
+    car_tex   = &car_light
+
+    buttons_tex = rl.LoadTexture("assets/images/buttons.png") 
 
     // Estacionamnto
-    parking := Sprite{
+    parking = Sprite{
         tex      = rl.LoadTexture("assets/images/parking.png"),
         src      = {0, 0, 256, 256},
         dst      = {SCREEN_CENTER.x, SCREEN_CENTER.y - 128, 256, 256},
@@ -86,28 +95,28 @@ main :: proc() {
         color    = FOREGROUND_COLOR
     }
 
-    append(&btns,
-        /* Novo */  newButton(1,  {5, 5}, btnAdd),
-        /* Cima */  newButton(2,  {5, 10 + 64}),
-        /* Baixo */ newButton(3,  {5, 15 + 96}),
+    append(&buttons,
+        /* Novo */  newButton(1,  {5, 5}, btnAddUpdate, btnAddPress),
+        /* Cima */  newButton(2,  {5, 10 + 64}, btnUpUpdate, btnUpPress),
+        /* Baixo */ newButton(3,  {5, 15 + 96}, btnDownUpdate, btnDownPress),
         /* 1 */     newButton(4,  {SCREEN_WIDTH - 74, 5}),
         /* 2 */     newButton(5,  {SCREEN_WIDTH - 37, 5}),
         /* 3 */     newButton(6,  {SCREEN_WIDTH - 74, 10 + 32}),
         /* 4 */     newButton(7,  {SCREEN_WIDTH - 37, 10 + 32}),
         /* 5 */     newButton(8,  {SCREEN_WIDTH - 74, 15 + 64}),
         /* 6 */     newButton(9,  {SCREEN_WIDTH - 37, 15 + 64}),
-        /* Tema */  newButton(10, {SCREEN_WIDTH - 37, SCREEN_HEIGHT - 5 - 32}, btnChangeTheme)
+        /* Tema */  newButton(10, {SCREEN_WIDTH - 37, SCREEN_HEIGHT - 5 - 37}, nil, btnChangeTheme)
     )
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
         // parking.rotation += 100 * rl.GetFrameTime()
 
-        if rl.IsMouseButtonPressed(.LEFT) {
-            for &btn in btns {
-                if mouseInArea(btn) && !inEvent {
-                    if btn.active && btn.action != nil { btn->action() }
-                }
+        for &btn in buttons {
+            if btn.update != nil { btn->update() }
+
+            if rl.IsMouseButtonPressed(.LEFT) && mouseInArea(btn) && btn.active && !inEvent {
+                if btn.press != nil { btn->press() }
             }
         }
 
@@ -121,7 +130,7 @@ main :: proc() {
             )
             
             // Botões
-            for &btn in btns {
+            for &btn in buttons {
                 drawButton(&btn)
             }
             
@@ -129,9 +138,11 @@ main :: proc() {
             if ramp != nil {
                 rl.DrawTexturePro(car_tex^, ramp.src, ramp.dst, ramp.origin, ramp.rotation, ramp.color^)
             }
+
             if gate != nil {
                 rl.DrawTexturePro(car_tex^, gate.src, gate.dst, gate.origin, gate.rotation, gate.color^)
             }
+
             for &car in cars {
                 car.rotation = parking.rotation - f32(60 * car.number)
                 rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
@@ -140,7 +151,7 @@ main :: proc() {
             rl.DrawLineV({192, 256 - 18}, {192, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
             rl.DrawLineV({320, 256 - 18}, {320, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
 
-            rl.DrawText(fmt.ctprintf("vaga %d", (i32(parking.rotation) %% 360) / 60 + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
+            rl.DrawText(fmt.ctprintf("vaga %d", getCurrentLot() + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
 
             rl.DrawText("  FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
             rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR^)
