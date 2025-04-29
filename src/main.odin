@@ -40,16 +40,15 @@ Sprite :: struct {
 }
 
 Car :: struct {
-    number: i32,
     using sprite: Sprite
 }
 
-buttons: [dynamic]Button
-cars: [dynamic]Car
-ramp: ^Car
-gate: ^Car
-gateState: enum { FIRST, SECOND }
-inEvent: bool
+buttons:    [dynamic]Button
+cars:       [6]^Car
+ramp:      ^Car
+gate:      ^Car
+gateState:  enum { FIRST, SECOND }
+inEvent:    bool
 
 car_light,
 car_dark,
@@ -58,14 +57,14 @@ car_tex:     ^rl.Texture
 
 parking: Sprite
 
-newCar :: proc(color: Maybe(^rl.Color) = nil) -> Car {
-    return {number = -1, sprite = {
+newCar :: proc(color: Maybe(^rl.Color) = nil) -> ^Car {
+    return new_clone(Car{sprite = {
             src      = {0, 0, 48, 128},
             dst      = RAMP_DST,
             origin   = {24, 0},
             color    = color.? or_else COLORS[rand.int_max(len(COLORS))]
         }
-    }
+    })
 }
 
 getCurrentLot :: proc() -> i32 {
@@ -110,7 +109,6 @@ main :: proc() {
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
-        // parking.rotation += 100 * rl.GetFrameTime()
 
         for &btn in buttons {
             if btn.update != nil { btn->update() }
@@ -143,9 +141,11 @@ main :: proc() {
                 rl.DrawTexturePro(car_tex^, gate.src, gate.dst, gate.origin, gate.rotation, gate.color^)
             }
 
-            for &car in cars {
-                car.rotation = parking.rotation - f32(60 * car.number)
-                rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
+            for &car, i in cars {
+                if car != nil {
+                    car.rotation = parking.rotation - f32(60 * i)
+                    rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
+                }
             }
 
             rl.DrawLineV({192, 256 - 18}, {192, SCREEN_HEIGHT}, FOREGROUND_COLOR^)

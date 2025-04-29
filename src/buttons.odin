@@ -56,12 +56,13 @@ btnAddUpdate :: proc(button: ^Button) {
 }
 
 btnAddPress :: proc(button: ^Button) {
-    ramp = new_clone(newCar())
+    ramp = newCar()
 }
 
 
 btnUpUpdate :: proc(button: ^Button) {
-    button.active = ramp != nil && gate == nil
+    button.active = (ramp != nil && gate == nil) ||
+                    (gate != nil && cars[getCurrentLot()] == nil)
 }
 
 btnUpPress :: proc(button: ^Button) {
@@ -70,6 +71,11 @@ btnUpPress :: proc(button: ^Button) {
     
         gate = ramp
         ramp = nil
+    } else if gate != nil {
+        gate.dst = PARKING_DST
+
+        cars[getCurrentLot()] = gate
+        gate = nil
     }
 }
 
