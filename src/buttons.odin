@@ -12,6 +12,8 @@ Button :: struct {
     using sprite: Sprite,
 }
 
+buttons:    [dynamic]Button
+
 newButton :: proc(button: i32, pos: rl.Vector2, update: proc(^Button) = nil, press: proc(^Button) = nil) -> Button {
     return {
         update = update,
