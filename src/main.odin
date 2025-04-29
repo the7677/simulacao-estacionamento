@@ -45,7 +45,7 @@ cars: [dynamic]Car
 ramp: ^Car
 gate: ^Car
 gateState: enum { FIRST, SECOND }
-inRotation: bool
+inEvent: bool
 
 RAMP_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y + 128, 48, 128}
 GATE_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y, 48, 128}
@@ -72,13 +72,13 @@ main :: proc() {
     
     defer rl.CloseWindow()
 
-    car_light = rl.LoadTexture("car_light.png")
-    car_dark  = rl.LoadTexture("car_dark.png")
+    car_light = rl.LoadTexture("assets/images/car_light.png")
+    car_dark  = rl.LoadTexture("assets/images/car_dark.png")
     car_tex   = new_clone(car_light)
 
     // Estacionamnto
     parking := Sprite{
-        tex      = rl.LoadTexture("parking.png"),
+        tex      = rl.LoadTexture("assets/images/parking.png"),
         src      = {0, 0, 256, 256},
         dst      = {SCREEN_CENTER.x, SCREEN_CENTER.y - 128, 256, 256},
         origin   = {128, 128},
@@ -105,7 +105,7 @@ main :: proc() {
 
         if rl.IsMouseButtonPressed(.LEFT) {
             for &btn in btns {
-                if mouseInArea(btn) && !inRotation {
+                if mouseInArea(btn) && !inEvent {
                     if btn.active && btn.action != nil { btn->action() }
                 }
             }

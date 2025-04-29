@@ -12,7 +12,7 @@ Button :: struct {
 }
 
 newButton :: proc(button: i32, pos: rl.Vector2, action: proc(^Button) = nil) -> Button {
-    buttons := rl.LoadTexture("buttons.png")
+    buttons := rl.LoadTexture("assets/images/buttons.png")
     
     return {
         action = action,
@@ -28,7 +28,7 @@ newButton :: proc(button: i32, pos: rl.Vector2, action: proc(^Button) = nil) -> 
 
 drawButton :: proc(button: ^Button) {
     rl.DrawTexturePro(
-        button.tex if button.active && !inRotation else {}, button.src, button.dst, button.origin, button.rotation, button.color^
+        button.tex if button.active && !inEvent else {}, button.src, button.dst, button.origin, button.rotation, button.color^
     )
 }
 
@@ -60,4 +60,12 @@ btnAdd :: proc(button: ^Button) {
     if len(cars) > 6 { panic("MAIS DE 6 CARROS") }
     
     button.active = len(cars) < 6 && ramp == nil
+}
+
+btnUp :: proc(button: ^Button) {
+
+}
+
+btnDown :: proc(button: ^Button) {
+
 }
