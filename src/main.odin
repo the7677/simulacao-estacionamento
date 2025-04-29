@@ -4,18 +4,19 @@ import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import "core:slice"
+import "core:os"
 
 import rl "vendor:raylib"
 
 
-SCREEN_WIDTH, SCREEN_HEIGHT :: 512, 512
+SCREEN_WIDTH, SCREEN_HEIGHT :: 910, 512
 SCREEN_CENTER :: rl.Vector2{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}
 
 RAMP_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y + 128, 48, 128}
 GATE_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y, 48, 128}
 PARKING_DST :: rl.Rectangle{SCREEN_CENTER.x, 128, 48, 128}
 
-PARKING_SPEED :: 100
+PARKING_SPEED :: 60
 
 Sprite :: struct {
     tex:      rl.Texture2D,
@@ -31,14 +32,14 @@ gate:           ^Car
 openGate:        enum { FIRST, SECOND }
 gateMode:        enum { ENTRANCE, EXIT_FDC, EXIT } = .ENTRANCE
 rotating:        bool
-hasAvailableLot: bool
+hasAvailableLot: bool = true
 availableLot:    int
+selectedLot:     int = -1
 
-pastLot: i32 = 0
 parking: Sprite
 
-getCurrentLot :: proc() -> i32 {
-    return (i32(parking.rotation) %% 360) / 60
+getCurrentLot :: proc() -> int {
+    return (int(parking.rotation) %% 360) / 60
 }
 
 main :: proc() {
@@ -77,24 +78,52 @@ main :: proc() {
         if slice.count(cars[:], nil) == 0 {
             gateMode = .EXIT
         }
-        
+
+        // Verificando se há vaga livre, somente se nenhum carro estiver saindo
+        availableLot, hasAvailableLot = slice.linear_search(cars[:], nil)
+        if gateMode != .EXIT && selectedLot == -1 && hasAvailableLot && cars[getCurrentLot()] != nil {
+            rotating = true
+        }
+
+        switch gateMode {
+            case .ENTRANCE:
+                if gate != nil {
+                    openGate = .FIRST
+                } else {
+                    openGate = .SECOND
+                }
+            case .EXIT:
+                if gate != nil {
+                    openGate = .SECOND
+                    gateMode = .EXIT_FDC
+                } else {
+                    openGate = .FIRST
+                }
+            case .EXIT_FDC:
+                if gate != nil {
+                    openGate = .SECOND
+                } else {
+                    gateMode = .ENTRANCE
+                }
+        }
+
         if rotating {
-            parking.rotation += 60 * rl.GetFrameTime()
+            openGate = .FIRST
+            parking.rotation += PARKING_SPEED * rl.GetFrameTime()
 
             // Encontrou vaga disponível
-            if cars[getCurrentLot()] == nil {
-
+            // if hasAvailableLot && cars[getCurrentLot()] == nil {
+            if selectedLot == -1 && getCurrentLot() == availableLot {
                 rotating = false
             }
 
-            pastLot = getCurrentLot()
-        }
+            // ou
 
-        if gateMode == .ENTRANCE {
-            if gate != nil {
-                openGate = .FIRST
-            } else {
-                openGate = .SECOND
+            // Indo até vaga selecionada
+            if selectedLot != -1 && getCurrentLot() == selectedLot {
+                rotating = false
+                gateMode = .EXIT
+                selectedLot = -1
             }
         }
 
@@ -106,6 +135,7 @@ main :: proc() {
             }
         }
 
+        /* Debug */
 
         /* Render */
         rl.BeginDrawing()
@@ -138,13 +168,13 @@ main :: proc() {
             }
 
             // Cancelas
-            rl.DrawRectangle(192, 256, 5 if openGate == .FIRST else 128, 10, FOREGROUND_COLOR^)
-            rl.DrawRectangle(192, 384, 5 if openGate == .SECOND else 128, 10, FOREGROUND_COLOR^)
+            rl.DrawRectangleRec({SCREEN_CENTER.x - 64, 258, 5 if openGate == .FIRST else 128, 10}, FOREGROUND_COLOR^)
+            rl.DrawRectangleRec({SCREEN_CENTER.x - 64, 384, 5 if openGate == .SECOND else 128, 10}, FOREGROUND_COLOR^)
 
-            rl.DrawLineV({192, 256 - 18}, {192, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
-            rl.DrawLineV({320, 256 - 18}, {320, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
+            rl.DrawLineV({SCREEN_CENTER.x - 64, 256 - 18}, {SCREEN_CENTER.x - 64, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
+            rl.DrawLineV({SCREEN_CENTER.x + 64, 256 - 18}, {SCREEN_CENTER.x + 64, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
 
-            rl.DrawText(fmt.ctprintf("vaga %d", getCurrentLot() + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
+            rl.DrawText(fmt.ctprintf("vaga %d", getCurrentLot() + 1), i32(SCREEN_CENTER.x - 16), 123+1, 2, FOREGROUND_COLOR^)
 
             rl.DrawText(" FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
             rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR^)

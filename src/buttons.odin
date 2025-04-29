@@ -81,9 +81,8 @@ btnUpPress :: proc(button: ^Button) {
             cars[getCurrentLot()] = gate
             gate = nil
 
-            availableLot, hasAvailableLot = slice.linear_search(cars[:], nil)
-            if hasAvailableLot { rotating = true }
-    }
+            
+    } 
 }
 
 btnDownUpdate :: proc(button: ^Button) {
@@ -110,8 +109,8 @@ btnDownPress :: proc(button: ^Button) {
     }
 }
 
-btnNumberUpdate :: proc(button: ^Button, number: i32) {
-    // button.active = cars[number] != nil && getCurrentLot() != number
+btnNumberUpdate :: proc(button: ^Button, number: int) {
+    button.active = gate == nil && cars[number] != nil && getCurrentLot() != number
 }
 
 btnNumber1Update :: proc(button: ^Button) { btnNumberUpdate(button, 0) }
@@ -121,8 +120,10 @@ btnNumber4Update :: proc(button: ^Button) { btnNumberUpdate(button, 3) }
 btnNumber5Update :: proc(button: ^Button) { btnNumberUpdate(button, 4) }
 btnNumber6Update :: proc(button: ^Button) { btnNumberUpdate(button, 5) }
 
-btnNumberPress :: proc(button: ^Button, number: i32) {
-
+btnNumberPress :: proc(button: ^Button, number: int) {
+    selectedLot = number
+    rotating = true
+    gateMode = .EXIT
 }
 
 btnNumber1Press :: proc(button: ^Button) { btnNumberPress(button, 0) }
