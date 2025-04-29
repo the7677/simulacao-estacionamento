@@ -26,8 +26,6 @@ COLORS       := []^rl.Color{
     BLUE_COLOR, CYAN_COLOR, GREEN_COLOR, PURPLE_COLOR, RED_COLOR, YELLOW_COLOR
 }
 
-FONT_SIZE :: 20
-
 Sprite :: struct {
     tex:      rl.Texture2D,
     src:      rl.Rectangle,
@@ -47,13 +45,20 @@ cars: [dynamic]Car
 ramp: ^Car
 gate: ^Car
 gateState: enum { FIRST, SECOND }
-car_light, car_dark: rl.Texture
-car_tex: ^rl.Texture
+inRotation: bool
 
-newCar :: proc(number: i32, color: Maybe(^rl.Color) = nil) -> Car {
-    return {number = number, sprite = {
+RAMP_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y + 128, 48, 128}
+GATE_DST    :: rl.Rectangle{SCREEN_CENTER.x, SCREEN_CENTER.y, 48, 128}
+PARKING_DST :: rl.Rectangle{SCREEN_CENTER.x, 128, 48, 128}
+
+car_light,
+car_dark:  rl.Texture
+car_tex:  ^rl.Texture
+
+newCar :: proc(color: Maybe(^rl.Color) = nil) -> Car {
+    return {number = -1, sprite = {
             src      = {0, 0, 48, 128},
-            dst      = {256, 128, 48, 128},
+            dst      = RAMP_DST,
             origin   = {24, 0},
             color    = color.? or_else COLORS[rand.int_max(len(COLORS))]
         }
@@ -71,6 +76,7 @@ main :: proc() {
     car_dark  = rl.LoadTexture("car_dark.png")
     car_tex   = new_clone(car_light)
 
+    // Estacionamnto
     parking := Sprite{
         tex      = rl.LoadTexture("parking.png"),
         src      = {0, 0, 256, 256},
@@ -80,7 +86,6 @@ main :: proc() {
         color    = FOREGROUND_COLOR
     }
 
-    btn_newcar := newButton(1, {5, 5})
     append(&btns,
         /* Novo */  newButton(1,  {5, 5}, btnAdd),
         /* Cima */  newButton(2,  {5, 10 + 64}),
@@ -96,11 +101,11 @@ main :: proc() {
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
-        parking.rotation += 0 * rl.GetFrameTime()
+        // parking.rotation += 100 * rl.GetFrameTime()
 
         if rl.IsMouseButtonPressed(.LEFT) {
             for &btn in btns {
-                if mouseInArea(btn) {
+                if mouseInArea(btn) && !inRotation {
                     if btn.active && btn.action != nil { btn->action() }
                 }
             }
@@ -121,6 +126,12 @@ main :: proc() {
             }
             
             // Carros
+            if ramp != nil {
+                rl.DrawTexturePro(car_tex^, ramp.src, ramp.dst, ramp.origin, ramp.rotation, ramp.color^)
+            }
+            if gate != nil {
+                rl.DrawTexturePro(car_tex^, gate.src, gate.dst, gate.origin, gate.rotation, gate.color^)
+            }
             for &car in cars {
                 car.rotation = parking.rotation - f32(60 * car.number)
                 rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
@@ -131,8 +142,8 @@ main :: proc() {
 
             rl.DrawText(fmt.ctprintf("vaga %d", (i32(parking.rotation) %% 360) / 60 + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
 
-            rl.DrawText("  FDC ->", 60, 340, FONT_SIZE, FOREGROUND_COLOR^)
-            rl.DrawText("Rampa ->", 60, 460, FONT_SIZE, FOREGROUND_COLOR^)
+            rl.DrawText("  FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
+            rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR^)
 
         rl.EndDrawing()
     }

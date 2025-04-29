@@ -28,7 +28,7 @@ newButton :: proc(button: i32, pos: rl.Vector2, action: proc(^Button) = nil) -> 
 
 drawButton :: proc(button: ^Button) {
     rl.DrawTexturePro(
-        button.tex if button.active else {}, button.src, button.dst, button.origin, button.rotation, button.color^
+        button.tex if button.active && !inRotation else {}, button.src, button.dst, button.origin, button.rotation, button.color^
     )
 }
 
@@ -53,14 +53,11 @@ btnChangeTheme :: proc(^Button) {
 }
 
 btnAdd :: proc(button: ^Button) {
-    @static n: i32 = 0
-    defer n += 1
-
-    if len(cars) < 6 {
-        append(&cars, newCar(n))
+    if len(cars) < 6 && ramp == nil {
+        ramp = new_clone(newCar())
     }
 
     if len(cars) > 6 { panic("MAIS DE 6 CARROS") }
     
-    button.active = len(cars) < 6
+    button.active = len(cars) < 6 && ramp == nil
 }
