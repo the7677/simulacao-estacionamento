@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:slice"
 
 import rl "vendor:raylib"
 
@@ -30,7 +31,7 @@ newButton :: proc(button: i32, pos: rl.Vector2, update: proc(^Button) = nil, pre
 
 drawButton :: proc(button: ^Button) {
     rl.DrawTexturePro(
-        button.tex if button.active && !inEvent else {}, button.src, button.dst, button.origin, button.rotation, button.color^
+        button.tex if button.active && !rotating else {}, button.src, button.dst, button.origin, button.rotation, button.color^
     )
 }
 
@@ -79,6 +80,9 @@ btnUpPress :: proc(button: ^Button) {
             
             cars[getCurrentLot()] = gate
             gate = nil
+
+            availableLot, hasAvailableLot = slice.linear_search(cars[:], nil)
+            if hasAvailableLot { rotating = true }
     }
 }
 
@@ -105,3 +109,25 @@ btnDownPress :: proc(button: ^Button) {
             cars[getCurrentLot()] = nil
     }
 }
+
+btnNumberUpdate :: proc(button: ^Button, number: i32) {
+    // button.active = cars[number] != nil && getCurrentLot() != number
+}
+
+btnNumber1Update :: proc(button: ^Button) { btnNumberUpdate(button, 0) }
+btnNumber2Update :: proc(button: ^Button) { btnNumberUpdate(button, 1) }
+btnNumber3Update :: proc(button: ^Button) { btnNumberUpdate(button, 2) }
+btnNumber4Update :: proc(button: ^Button) { btnNumberUpdate(button, 3) }
+btnNumber5Update :: proc(button: ^Button) { btnNumberUpdate(button, 4) }
+btnNumber6Update :: proc(button: ^Button) { btnNumberUpdate(button, 5) }
+
+btnNumberPress :: proc(button: ^Button, number: i32) {
+
+}
+
+btnNumber1Press :: proc(button: ^Button) { btnNumberPress(button, 0) }
+btnNumber2Press :: proc(button: ^Button) { btnNumberPress(button, 1) }
+btnNumber3Press :: proc(button: ^Button) { btnNumberPress(button, 2) }
+btnNumber4Press :: proc(button: ^Button) { btnNumberPress(button, 3) }
+btnNumber5Press :: proc(button: ^Button) { btnNumberPress(button, 4) }
+btnNumber6Press :: proc(button: ^Button) { btnNumberPress(button, 5) }

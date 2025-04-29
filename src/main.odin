@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "core:math"
 import "core:math/rand"
+import "core:slice"
 
 import rl "vendor:raylib"
 
@@ -25,16 +26,19 @@ Sprite :: struct {
     color:    ^rl.Color
 }
 
-ramp:      ^Car
-gate:      ^Car
-openGate:   enum { FIRST, SECOND }
-gateMode:   enum { ENTRANCE, EXIT }
-inEvent:    bool
+ramp:           ^Car
+gate:           ^Car
+openGate:        enum { FIRST, SECOND }
+gateMode:        enum { ENTRANCE, EXIT_FDC, EXIT } = .ENTRANCE
+rotating:        bool
+hasAvailableLot: bool
+availableLot:    int
 
+pastLot: i32 = 0
 parking: Sprite
 
 getCurrentLot :: proc() -> i32 {
-    return (i32(parking.rotation + 30) %% 360) / 60
+    return (i32(parking.rotation) %% 360) / 60
 }
 
 main :: proc() {
@@ -59,30 +63,49 @@ main :: proc() {
         /* Novo */  newButton(1,  {5, 5}, btnAddUpdate, btnAddPress),
         /* Cima */  newButton(2,  {5, 10 + 64}, btnUpUpdate, btnUpPress),
         /* Baixo */ newButton(3,  {5, 15 + 96}, btnDownUpdate, btnDownPress),
-        /* 1 */     newButton(4,  {SCREEN_WIDTH - 74, 5}),
-        /* 2 */     newButton(5,  {SCREEN_WIDTH - 37, 5}),
-        /* 3 */     newButton(6,  {SCREEN_WIDTH - 74, 10 + 32}),
-        /* 4 */     newButton(7,  {SCREEN_WIDTH - 37, 10 + 32}),
-        /* 5 */     newButton(8,  {SCREEN_WIDTH - 74, 15 + 64}),
-        /* 6 */     newButton(9,  {SCREEN_WIDTH - 37, 15 + 64}),
-        /* Tema */  newButton(10, {SCREEN_WIDTH - 37, SCREEN_HEIGHT - 5 - 37}, nil, btnChangeTheme)
+        /* 1 */     newButton(4,  {SCREEN_WIDTH - 74, 5}, btnNumber1Update, btnNumber1Press),
+        /* 2 */     newButton(5,  {SCREEN_WIDTH - 37, 5}, btnNumber2Update, btnNumber2Press),
+        /* 3 */     newButton(6,  {SCREEN_WIDTH - 74, 42}, btnNumber3Update, btnNumber3Press),
+        /* 4 */     newButton(7,  {SCREEN_WIDTH - 37, 42}, btnNumber4Update, btnNumber4Press),
+        /* 5 */     newButton(8,  {SCREEN_WIDTH - 74, 79}, btnNumber5Update, btnNumber5Press),
+        /* 6 */     newButton(9,  {SCREEN_WIDTH - 37, 79}, btnNumber6Update, btnNumber6Press),
+        /* Tema */  newButton(10, {SCREEN_WIDTH - 37, SCREEN_HEIGHT - 42}, nil, btnChangeTheme)
     )
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
-        if gate != nil {
-            openGate = .FIRST
-        } else {
-            openGate = .SECOND
+        if slice.count(cars[:], nil) == 0 {
+            gateMode = .EXIT
+        }
+        
+        if rotating {
+            parking.rotation += 60 * rl.GetFrameTime()
+
+            // Encontrou vaga disponível
+            if cars[getCurrentLot()] == nil {
+
+                rotating = false
+            }
+
+            pastLot = getCurrentLot()
+        }
+
+        if gateMode == .ENTRANCE {
+            if gate != nil {
+                openGate = .FIRST
+            } else {
+                openGate = .SECOND
+            }
         }
 
         for &btn in buttons {
             if btn.update != nil { btn->update() }
 
-            if rl.IsMouseButtonPressed(.LEFT) && mouseInArea(btn) && btn.active && !inEvent {
+            if rl.IsMouseButtonPressed(.LEFT) && mouseInArea(btn) && btn.active && !rotating {
                 if btn.press != nil { btn->press() }
             }
         }
+
 
         /* Render */
         rl.BeginDrawing()
