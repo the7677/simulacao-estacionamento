@@ -96,7 +96,7 @@ main :: proc() {
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
-        // parking.rotation += 100 * rl.GetFrameTime()
+        parking.rotation += 0 * rl.GetFrameTime()
 
         if rl.IsMouseButtonPressed(.LEFT) {
             for &btn in btns {
@@ -122,7 +122,7 @@ main :: proc() {
             
             // Carros
             for &car in cars {
-                car.rotation = parking.rotation + f32(60 * car.number)
+                car.rotation = parking.rotation - f32(60 * car.number)
                 rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
             }
 
