@@ -28,6 +28,7 @@ Sprite :: struct {
 ramp:      ^Car
 gate:      ^Car
 openGate:   enum { FIRST, SECOND }
+gateMode:   enum { ENTRANCE, EXIT }
 inEvent:    bool
 
 parking: Sprite

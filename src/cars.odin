@@ -11,8 +11,6 @@ Car :: struct {
 
 cars:       [6]^Car
 
-
-
 newCar :: proc(color: Maybe(^rl.Color) = nil) -> ^Car {
     return new_clone(Car{sprite = {
             src      = {0, 0, 48, 128},

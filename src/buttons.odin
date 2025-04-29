@@ -69,7 +69,7 @@ btnUpUpdate :: proc(button: ^Button) {
 
 btnUpPress :: proc(button: ^Button) {
     switch {
-        case ramp != nil:
+        case ramp != nil && gate == nil:
             ramp.dst = GATE_DST
             
             gate = ramp
