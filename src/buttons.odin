@@ -61,43 +61,45 @@ btnAddPress :: proc(button: ^Button) {
 
 
 btnUpUpdate :: proc(button: ^Button) {
-    button.active = (ramp != nil && gate == nil) ||
-                    (gate != nil && cars[getCurrentLot()] == nil)
+    button.active = (ramp != nil && gate == nil && openGate == .SECOND) ||
+                    (gate != nil && cars[getCurrentLot()] == nil && openGate == .FIRST)
 }
 
 btnUpPress :: proc(button: ^Button) {
-    if ramp != nil {
-        ramp.dst = GATE_DST
-    
-        gate = ramp
-        ramp = nil
-    } else if gate != nil {
-        gate.dst = PARKING_DST
-
-        cars[getCurrentLot()] = gate
-        gate = nil
+    switch {
+        case ramp != nil:
+            ramp.dst = GATE_DST
+            
+            gate = ramp
+            ramp = nil
+        case gate != nil:
+            gate.dst = PARKING_DST
+            
+            cars[getCurrentLot()] = gate
+            gate = nil
     }
 }
 
 btnDownUpdate :: proc(button: ^Button) {
     button.active = (ramp != nil) ||
-                    (gate != nil && ramp == nil) ||
-                    (cars[getCurrentLot()] != nil && gate == nil)
+                    (gate != nil && ramp == nil && openGate == .SECOND) ||
+                    (cars[getCurrentLot()] != nil && gate == nil && openGate == .FIRST)
 }
 
 btnDownPress :: proc(button: ^Button) {
-    if ramp != nil {
-        free(ramp)
-        ramp = nil
-    } else if gate != nil {
-        gate.dst = RAMP_DST
+    switch {
+        case ramp != nil:
+            free(ramp)
+            ramp = nil
+        case gate != nil:
+            gate.dst = RAMP_DST
 
-        ramp = gate
-        gate = nil
-    } else if cars[getCurrentLot()] != nil {
-        cars[getCurrentLot()].dst = GATE_DST
+            ramp = gate
+            gate = nil
+        case cars[getCurrentLot()] != nil:
+            cars[getCurrentLot()].dst = GATE_DST
 
-        gate = cars[getCurrentLot()]
-        cars[getCurrentLot()] = nil
+            gate = cars[getCurrentLot()]
+            cars[getCurrentLot()] = nil
     }
 }

@@ -47,7 +47,7 @@ buttons:    [dynamic]Button
 cars:       [6]^Car
 ramp:      ^Car
 gate:      ^Car
-gateState:  enum { FIRST, SECOND }
+openGate:   enum { FIRST, SECOND }
 inEvent:    bool
 
 car_light,
@@ -109,6 +109,12 @@ main :: proc() {
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
+        if gate != nil {
+            openGate = .FIRST
+        } else {
+            openGate = .SECOND
+        }
+
         for &btn in buttons {
             if btn.update != nil { btn->update() }
 
@@ -120,16 +126,16 @@ main :: proc() {
         /* Render */
         rl.BeginDrawing()
             rl.ClearBackground(BACKGROUND_COLOR^)
-
-            // Estacionamento
-            rl.DrawTexturePro(
-                parking.tex, parking.src, parking.dst, parking.origin, math.mod(parking.rotation, 60), parking.color^
-            )
             
             // Botões
             for &btn in buttons {
                 drawButton(&btn)
             }
+
+            // Estacionamento
+            rl.DrawTexturePro(
+                parking.tex, parking.src, parking.dst, parking.origin, math.mod(parking.rotation, 60), parking.color^
+            )
             
             // Carros
             if ramp != nil {
@@ -146,6 +152,10 @@ main :: proc() {
                     rl.DrawTexturePro(car_tex^, car.src, car.dst, car.origin, car.rotation, car.color^)
                 }
             }
+
+            // Cancelas
+            rl.DrawRectangle(192, 256, 5 if openGate == .FIRST else 128, 10, FOREGROUND_COLOR^)
+            rl.DrawRectangle(192, 384, 5 if openGate == .SECOND else 128, 10, FOREGROUND_COLOR^)
 
             rl.DrawLineV({192, 256 - 18}, {192, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
             rl.DrawLineV({320, 256 - 18}, {320, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
