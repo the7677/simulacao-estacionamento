@@ -68,7 +68,7 @@ newCar :: proc(color: Maybe(^rl.Color) = nil) -> ^Car {
 }
 
 getCurrentLot :: proc() -> i32 {
-    return (i32(parking.rotation) %% 360) / 60
+    return (i32(parking.rotation + 30) %% 360) / 60
 }
 
 main :: proc() {
@@ -109,7 +109,6 @@ main :: proc() {
 
     for !rl.WindowShouldClose() {
         /* Atualizações*/
-
         for &btn in buttons {
             if btn.update != nil { btn->update() }
 
@@ -153,7 +152,7 @@ main :: proc() {
 
             rl.DrawText(fmt.ctprintf("vaga %d", getCurrentLot() + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
 
-            rl.DrawText("  FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
+            rl.DrawText(" FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
             rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR^)
 
         rl.EndDrawing()

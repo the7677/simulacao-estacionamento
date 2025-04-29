@@ -80,7 +80,9 @@ btnUpPress :: proc(button: ^Button) {
 }
 
 btnDownUpdate :: proc(button: ^Button) {
-    button.active = ramp != nil || gate != nil
+    button.active = (ramp != nil) ||
+                    (gate != nil && ramp == nil) ||
+                    (cars[getCurrentLot()] != nil && gate == nil)
 }
 
 btnDownPress :: proc(button: ^Button) {
@@ -92,5 +94,10 @@ btnDownPress :: proc(button: ^Button) {
 
         ramp = gate
         gate = nil
+    } else if cars[getCurrentLot()] != nil {
+        cars[getCurrentLot()].dst = GATE_DST
+
+        gate = cars[getCurrentLot()]
+        cars[getCurrentLot()] = nil
     }
 }
