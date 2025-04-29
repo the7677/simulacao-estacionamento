@@ -16,14 +16,17 @@ BACKGROUND_COLOR := new_clone(rl.Color{236, 230, 223, 255})
 FOREGROUND_COLOR := new_clone(rl.Color{42,  28,  49,  255})
 
 BLUE_COLOR   := new_clone(rl.Color{77,  82,  138, 255})
+CYAN_COLOR   := new_clone(rl.Color{176, 214, 217, 255})
 GREEN_COLOR  := new_clone(rl.Color{73,  101, 65,  255})
+ORANGE_COLOR := new_clone(rl.Color{208, 118,  62, 255})
 PURPLE_COLOR := new_clone(rl.Color{110, 69,  104, 255})
 RED_COLOR    := new_clone(rl.Color{159, 76,  61,  255})
 YELLOW_COLOR := new_clone(rl.Color{235, 172, 77,  255})
-
 COLORS       := []^rl.Color{
-    BLUE_COLOR, GREEN_COLOR, PURPLE_COLOR, RED_COLOR, YELLOW_COLOR
+    BLUE_COLOR, CYAN_COLOR, GREEN_COLOR, PURPLE_COLOR, RED_COLOR, YELLOW_COLOR
 }
+
+FONT_SIZE :: 20
 
 Sprite :: struct {
     tex:      rl.Texture2D,
@@ -35,7 +38,7 @@ Sprite :: struct {
 }
 
 Car :: struct {
-    number: u8,
+    number: i32,
     using sprite: Sprite
 }
 
@@ -47,12 +50,12 @@ gateState: enum { FIRST, SECOND }
 car_light, car_dark: rl.Texture
 car_tex: ^rl.Texture
 
-newCar :: proc(number: u8, color: Maybe(^rl.Color) = nil) -> Car {
+newCar :: proc(number: i32, color: Maybe(^rl.Color) = nil) -> Car {
     return {number = number, sprite = {
             src      = {0, 0, 48, 128},
             dst      = {256, 128, 48, 128},
             origin   = {24, 0},
-            color    = color.? or_else COLORS[rand.int_max(5)]
+            color    = color.? or_else COLORS[rand.int_max(len(COLORS))]
         }
     }
 }
@@ -77,31 +80,28 @@ main :: proc() {
         color    = FOREGROUND_COLOR
     }
 
-    append(&cars, newCar(0), newCar(1), newCar(2), newCar(3))
-
     btn_newcar := newButton(1, {5, 5})
     append(&btns,
-        /* Novo */  newButton(1, {5, 5}),
-        /* Cima */  newButton(2, {5, 10 + 64}),
-        /* Baixo */ newButton(3, {5, 15 + 96}),
-        /* 1 */     newButton(4, {SCREEN_WIDTH - 10 - 64, 5}),
-        /* 2 */     newButton(5, {SCREEN_WIDTH - 5 - 32, 5}),
-        /* 3 */     newButton(6, {SCREEN_WIDTH - 10 - 64, 10 + 32}),
-        /* 4 */     newButton(7, {SCREEN_WIDTH - 5 - 32, 10 + 32}),
-        /* 5 */     newButton(8, {SCREEN_WIDTH - 10 - 64, 15 + 64}),
-        /* 6 */     newButton(9, {SCREEN_WIDTH - 5 - 32, 15 + 64}),
-        /* Tema */  newButton(10, {SCREEN_WIDTH - 5 - 32, SCREEN_HEIGHT - 5 - 32}, changeTheme)
+        /* Novo */  newButton(1,  {5, 5}, btnAdd),
+        /* Cima */  newButton(2,  {5, 10 + 64}),
+        /* Baixo */ newButton(3,  {5, 15 + 96}),
+        /* 1 */     newButton(4,  {SCREEN_WIDTH - 74, 5}),
+        /* 2 */     newButton(5,  {SCREEN_WIDTH - 37, 5}),
+        /* 3 */     newButton(6,  {SCREEN_WIDTH - 74, 10 + 32}),
+        /* 4 */     newButton(7,  {SCREEN_WIDTH - 37, 10 + 32}),
+        /* 5 */     newButton(8,  {SCREEN_WIDTH - 74, 15 + 64}),
+        /* 6 */     newButton(9,  {SCREEN_WIDTH - 37, 15 + 64}),
+        /* Tema */  newButton(10, {SCREEN_WIDTH - 37, SCREEN_HEIGHT - 5 - 32}, btnChangeTheme)
     )
 
     for !rl.WindowShouldClose() {
-
         /* Atualizações*/
-        parking.rotation += 100 * rl.GetFrameTime()
+        // parking.rotation += 100 * rl.GetFrameTime()
 
         if rl.IsMouseButtonPressed(.LEFT) {
             for &btn in btns {
                 if mouseInArea(btn) {
-                    if btn.action != nil { btn->action() }
+                    if btn.active && btn.action != nil { btn->action() }
                 }
             }
         }
@@ -129,8 +129,10 @@ main :: proc() {
             rl.DrawLineV({192, 256 - 18}, {192, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
             rl.DrawLineV({320, 256 - 18}, {320, SCREEN_HEIGHT}, FOREGROUND_COLOR^)
 
-            rl.DrawText("  FDC ->", 60, 340, 20, FOREGROUND_COLOR^)
-            rl.DrawText("Rampa ->", 60, 460, 20, FOREGROUND_COLOR^)
+            rl.DrawText(fmt.ctprintf("vaga %d", (i32(parking.rotation) %% 360) / 60 + 1), 240, 123+1, 2, FOREGROUND_COLOR^)
+
+            rl.DrawText("  FDC ->", 60, 340, FONT_SIZE, FOREGROUND_COLOR^)
+            rl.DrawText("Rampa ->", 60, 460, FONT_SIZE, FOREGROUND_COLOR^)
 
         rl.EndDrawing()
     }

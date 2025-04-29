@@ -28,7 +28,7 @@ newButton :: proc(button: i32, pos: rl.Vector2, action: proc(^Button) = nil) -> 
 
 drawButton :: proc(button: ^Button) {
     rl.DrawTexturePro(
-        button.tex, button.src, button.dst, button.origin, button.rotation, button.color^
+        button.tex if button.active else {}, button.src, button.dst, button.origin, button.rotation, button.color^
     )
 }
 
@@ -42,7 +42,7 @@ mouseInArea :: proc(button: Button) -> bool {
         mousePos.y < button.dst.y + button.dst.height
 }
 
-changeTheme :: proc(^Button) {
+btnChangeTheme :: proc(^Button) {
     DARKMODE = !DARKMODE
 
     temp := FOREGROUND_COLOR^
@@ -50,4 +50,17 @@ changeTheme :: proc(^Button) {
     BACKGROUND_COLOR^ = temp
 
     car_tex = &car_dark if DARKMODE else &car_light
+}
+
+btnAdd :: proc(button: ^Button) {
+    @static n: i32 = 0
+    defer n += 1
+
+    if len(cars) < 6 {
+        append(&cars, newCar(n))
+    }
+
+    if len(cars) > 6 { panic("MAIS DE 6 CARROS") }
+    
+    button.active = len(cars) < 6
 }
