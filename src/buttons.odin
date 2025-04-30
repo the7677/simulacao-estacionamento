@@ -38,11 +38,10 @@ drawButton :: proc(button: ^Button) {
 mouseInArea :: proc(button: Button) -> bool {
     mousePos := rl.GetMousePosition()
 
-    return\
-        mousePos.x > button.dst.x &&
-        mousePos.x < button.dst.x + button.dst.width &&
-        mousePos.y > button.dst.y &&
-        mousePos.y < button.dst.y + button.dst.height
+    return mousePos.x > button.dst.x &&
+           mousePos.x < button.dst.x + button.dst.width &&
+           mousePos.y > button.dst.y &&
+           mousePos.y < button.dst.y + button.dst.height
 }
 
 btnChangeTheme :: proc(^Button) {
